@@ -5,7 +5,7 @@ const piCationGroupTwo  = ['PHE', 'TYR', 'TRP'];
 const tStakingGroup     = ['PHE', 'TYR', 'TRP'];
 const vanDerWaalsGroup  = ['LEU', 'ILE', 'PHE'];
 const distance          = {
-    hydrogenic      : 2.5,
+    hydrogenic      : 3.5,
     piStaking       : 5,
     piCationStaking : 6.6,
     tStaking        : 6.5,

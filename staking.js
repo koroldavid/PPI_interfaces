@@ -13,6 +13,8 @@ const {
 module.exports = function staking(chains) {
     const chainsNames = Object.keys(chains);
     const chainData   = {}
+    const logs        = [];
+
 
     chainsNames.forEach((firstChainName, index) => {
         const chainsToConnect = [...chainsNames].slice(index + 1);
@@ -23,11 +25,11 @@ module.exports = function staking(chains) {
             chains[firstChainName].forEach((firstAtom, firstAtomIndex) => {
                 chains[secondChainName].forEach((secondAtom, secondAtomIndex) => {
                     if (
-                        checkConnecting(firstAtom, secondAtom, 'hydrogenic')      ||
-                        checkConnecting(firstAtom, secondAtom, 'piStaking')       ||
-                        checkConnecting(firstAtom, secondAtom, 'piCationStaking') ||
-                        checkConnecting(firstAtom, secondAtom, 'tStaking')        ||
-                        checkConnecting(firstAtom, secondAtom, 'vanDerWaals')
+                        checkConnecting(firstAtom, secondAtom, 'hydrogenic', logs)      ||
+                        checkConnecting(firstAtom, secondAtom, 'piStaking', logs)       ||
+                        checkConnecting(firstAtom, secondAtom, 'piCationStaking', logs) ||
+                        checkConnecting(firstAtom, secondAtom, 'tStaking', logs)        ||
+                        checkConnecting(firstAtom, secondAtom, 'vanDerWaals', logs)
                     ) {
                         chainData[`${firstChainName}${secondChainName}`].push([firstAtomIndex, secondAtomIndex])
                     }
@@ -36,7 +38,7 @@ module.exports = function staking(chains) {
         });
     });
 
-    return utils.filterStaking(chainData);
+    return { data: utils.filterStaking(chainData), logs };
 }
 
 const connectingData = {
@@ -50,7 +52,7 @@ const connectingData = {
     distance
 }
 
-function checkConnecting(firstAtom, secondAtom, type) {
+function checkConnecting(firstAtom, secondAtom, type, logs) {
     const Match  = connectingData.variants[type].find(variant => {
         return (
             (variant[0] === firstAtom[2] && variant[1] === secondAtom[2]) ||
@@ -81,7 +83,10 @@ function checkConnecting(firstAtom, secondAtom, type) {
             )
         );
 
-        return distance <= connectingData.distance[type] ? true : false;
+        if (distance <= connectingData.distance[type]) {
+            logs.push(`${firstAtom.slice(0, 5).join(' ')} and ${secondAtom.slice(0, 5).join(' ')} ${type} ${Math.floor(distance * 100) / 100}`);
+            return true
+        }
     }
 
     return false

@@ -18,9 +18,12 @@ fs.readdir(directoryFrom, (err, files) => {
         const parsedPDB = parsePdb(pdbLines);
         parsedPDB.fileName = file;
 
-        const stakingResult = staking(parsedPDB.chains);
+       
 
-        if (stakingResult.length) writeFile(parsedPDB, stakingResult);
+        const stakingResult = staking(parsedPDB.chains);
+        createLogs(file, stakingResult.logs);
+
+        // if (stakingResult.length) writeFile(parsedPDB, stakingResult);
 
         moveFile(file, directoryTo);
     })
@@ -36,3 +39,11 @@ const moveFile = (file, ToDir) =>{
         else console.log('Successfully moved');
     });
 };
+
+const createLogs = (fileName, logs) => {
+    const name = `${fileName.slice(0, fileName.length - 4)}.txt`;
+
+    fs.writeFile(`./Logs/${name}`, logs.join('\n'), (err) => {
+        if (err) throw err;
+    });
+}

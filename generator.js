@@ -4,8 +4,9 @@ const parsePdb = require('./parserPDB');
 const staking = require('./staking');
 const writeFile = require('./fileWorker');
 
-const directoryFrom = path.join('pdbFilesIn');
-const directoryTo   = path.join('pdbFilesOut');
+const directoryFrom    = path.join('pdbFilesIn');
+const directoryTo      = path.join('real_ppi');
+const directoryToTrash = path.join('pdbFilesOutTrash');
 
 fs.readdir(directoryFrom, (err, files) => {
     if (err) return console.log('Unable to scan directory: ' + err);
@@ -19,11 +20,13 @@ fs.readdir(directoryFrom, (err, files) => {
         parsedPDB.fileName = file;
 
         const stakingResult = staking(parsedPDB.chains);
+        createLogs(file, stakingResult.logs);
 
-        if (stakingResult.length) writeFile(parsedPDB, stakingResult);
+        if (stakingResult.data.length) writeFile(parsedPDB, stakingResult.data);
+        // if (!stakingResult.data.length) moveFile(file, directoryToTrash);
 
-        moveFile(file, directoryTo);
-    })
+        // moveFile(file, directoryTo);
+    });
 });
 
 const moveFile = (file, ToDir) =>{
@@ -36,3 +39,11 @@ const moveFile = (file, ToDir) =>{
         else console.log('Successfully moved');
     });
 };
+
+const createLogs = (fileName, logs) => {
+    const name = `${fileName.slice(0, fileName.length - 4)}.txt`;
+
+    fs.writeFile(`./Logs/${name}`, logs.join('\n'), (err) => {
+        if (err) throw err;
+    });
+}

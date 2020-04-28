@@ -53,43 +53,76 @@ const getPdbMolecules = (compndArry) => {
     return modelcules;
 }
 
-const atomsFilter = (Atoms) => {
-    return Atoms.filter(atom => {
-        const acid = atom[2];
+const filterAcids = (chains) => {
+    const chainKey = Object.keys(chains);
 
-        if (
-            acid === 'ALA' ||
-            acid === 'ARG' ||
-            acid === 'ASN' ||
-            acid === 'ASP' ||
-            acid === 'CYS' ||
-            acid === 'GLN' ||
-            acid === 'GLU' ||
-            acid === 'HIS' ||
-            acid === 'ILE' ||
-            acid === 'LEU' ||
-            acid === 'LYS' ||
-            acid === 'MET' ||
-            acid === 'PHE' ||
-            acid === 'PRO' ||
-            acid === 'SER' ||
-            acid === 'THR' ||
-            acid === 'TRP' ||
-            acid === 'TYR' ||
-            acid === 'VAL'
-        ) return true;
+    chainKey.forEach(key => {
+        const filtredAcids = [];
 
-        return false;
+        chains[key].forEach(acid => {
+            let isNormal = true
+    
+            acid.forEach(atom => {
+                const acidType = atom[2];
+                if (
+                    acidType === 'ALA' ||
+                    acidType === 'ARG' ||
+                    acidType === 'ASN' ||
+                    acidType === 'ASP' ||
+                    acidType === 'CYS' ||
+                    acidType === 'GLN' ||
+                    acidType === 'GLU' ||
+                    acidType === 'HIS' ||
+                    acidType === 'ILE' ||
+                    acidType === 'LEU' ||
+                    acidType === 'LYS' ||
+                    acidType === 'MET' ||
+                    acidType === 'PHE' ||
+                    acidType === 'PRO' ||
+                    acidType === 'SER' ||
+                    acidType === 'THR' ||
+                    acidType === 'TRP' ||
+                    acidType === 'TYR' ||
+                    acidType === 'VAL'
+                ) {
+                    return true;
+                } else {
+                    isNormal = false;
+                }
+            });
+    
+            if (isNormal) filtredAcids.push(acid);
+        });
+
+        chains[key] = filtredAcids;
+    });
+
+    return chains;
+}
+
+const getAminoAcids = (atoms) => {
+    const aminoAcids = {};
+
+    atoms.forEach(atom => {
+        const id = `${atom[3]}${atom[4]}`;
+
+        if (!aminoAcids[id]) aminoAcids[id] = [];
+
+        aminoAcids[id].push(atom);
+    });
+
+    return Object.keys(aminoAcids).map(acidNumber => {
+        return aminoAcids[acidNumber];
     });
 }
 
-const getChains = (Atoms) => {
+const getChains = (acids) => {
     const chains = {}
 
-    Atoms.forEach(atom => {
-        if (!chains[atom[3]]) chains[atom[3]] = [];
+    acids.forEach(acid => {
+        if (!chains[acid[0][3]]) chains[acid[0][3]] = [];
         
-        chains[atom[3]].push(atom);
+        chains[acid[0][3]].push(acid);
     });
 
     return chains;
@@ -133,24 +166,24 @@ const parseStaking = (stakingResult, chains) => {
         if (!parsedStaking[firstChain]) parsedStaking[firstChain] = [];
         if (!parsedStaking[secondChain]) parsedStaking[secondChain] = [];
 
-        stakingResult[key].forEach(atomsIndexes => {
-            const firstAtomIndex = atomsIndexes[0];
-            const secondAtomIndex = atomsIndexes[1];
+        stakingResult[key].forEach(acidsIndexes => {
+            const firstAcidIndex = acidsIndexes[0];
+            const secondAcidIndex = acidsIndexes[1];
 
-            const firstChainAtom = chains[firstChain][firstAtomIndex];
-            const secondChainAtom = chains[secondChain][secondAtomIndex];
+            const firstChainAcid = chains[firstChain][firstAcidIndex];
+            const secondChainAcid = chains[secondChain][secondAcidIndex];
 
-            const isFirstAtomIn = parsedStaking[firstChain].find(atom => atom[0] === firstChainAtom[0]);
-            const isSecondAtomIn = parsedStaking[secondChain].find(atom => atom[0] === secondChainAtom[0]);
+            const isFirstAcidIn = parsedStaking[firstChain].find(acid => acid[0][4] === firstChainAcid[0][4]);
+            const isSecondAcidIn = parsedStaking[secondChain].find(acid => acid[0][4] === secondChainAcid[0][4]);
 
-            if (!isFirstAtomIn) parsedStaking[firstChain].push(firstChainAtom);
-            if (!isSecondAtomIn) parsedStaking[secondChain].push(secondChainAtom);
+            if (!isFirstAcidIn) parsedStaking[firstChain].push(firstChainAcid);
+            if (!isSecondAcidIn) parsedStaking[secondChain].push(secondChainAcid);
          });
 
 
         const compare = (a, b) => {
-            const aPosition = a[0]
-            const bPosition = b[0]
+            const aPosition = a[0][4];
+            const bPosition = b[0][4];
           
             let comparison = 0;
             if (aPosition > bPosition) comparison = 1;
@@ -165,14 +198,48 @@ const parseStaking = (stakingResult, chains) => {
     return parsedStaking;
 }
 
+const normalizeAtom = (atom) => {
+    return [
+        ['ATOM'],
+        [addSpace(atom[0], 6, true) + ' '],
+        [addSpace(atom[1], 3, false)],
+        [atom[2]],
+        [atom[3]],
+        [addSpace(atom[4], 3, true) + '    '],
+        [addSpace(atom[5], 7, false)],
+        [addSpace(atom[6], 7, false)],
+        [addSpace(atom[7], 6, false) + ' '],
+        [atom[8]],
+        [atom[9] + '          '],
+        [atom[10]]
+    ];
+}
+
+const addSpace = (el, length, befor) => {
+    let newEl = el;
+
+    while (newEl.length < length) {
+        if (befor) newEl = ' ' + newEl;
+        if (!befor) newEl = newEl + ' ';
+        
+    }
+
+    return newEl
+}
+
 const simpleWritePreporation = (parsedStaking) => {
+    let allAcids = [];
     let allAtoms = [];
 
     Object.keys(parsedStaking).forEach(key => {
-        allAtoms = [...allAtoms, ...parsedStaking[key]];
+        allAcids = [...allAcids, ...parsedStaking[key]];
     });
 
-    return allAtoms.map(atom => atom.join(' ')).join('\n');
+    allAcids.forEach(acid => {
+        allAtoms = [...allAtoms, ...acid];
+    });
+
+    return allAtoms.map(atom => normalizeAtom(atom).join(' ')).join('\n');
 }
 
 
@@ -235,18 +302,101 @@ const complexWritePreporation = (parsedStaking, chains) => {
         });
     });
 
-    return complexDataItemsToString(complexData)
+    // const determitedData = determite(complexData);
+
+    return complexDataItemsToString(determitedData)
+}
+
+const determite = (complexData) => {
+    complexData.chainsNames.forEach(chain => {
+        const newChainSSkeys = [];
+
+        complexData[chain].SSKeys.forEach((ss, index) => {
+            const isAlfa = checkAlfa(complexData[chain].SSData[ss]);
+            const isBeta = checkBeta(complexData[chain].SSData[ss]);
+            const isBetaTurn = checkBetaTurn(complexData[chain].SSData[ss]);
+            let SSname = ss;
+
+            if (isAlfa) SSname = `ss${index + 1}_alpha_helix`;
+            if (isBeta) SSname = `ss${index + 1}_beta_sheet`;
+            if (isBetaTurn) SSname = `ss${index + 1}_beta-turn`;
+                
+            complexData[chain].SSData[SSname] = complexData[chain].SSData[ss];
+
+            newChainSSkeys.push(SSname);
+        });
+
+        complexData[chain].SSKeys = newChainSSkeys;
+    });
+
+    return complexData
+}
+
+const checkAlfa = (molecule) => {
+    let result = [];
+
+    molecule.forEach((atom, index) => {
+        if (index + 1 < molecule.length - 3) {
+            const compareAtom = molecule[index + 4];
+
+            const x1 = atom[6];
+            const y1 = atom[7];
+            const z1 = atom[8];
+
+            const x2 = compareAtom[6];
+            const y2 = compareAtom[7];
+            const z2 = compareAtom[8];
+
+            const distance = Math.sqrt(
+                Math.pow(
+                    (x2 - x1), 2
+                )
+                +
+                Math.pow(
+                    (y2 - y1), 2
+                )
+                +
+                Math.pow(
+                    (z2 - z1), 2
+                )
+            );
+
+            if (distance < 3.5) {
+                result.push(true);
+            } else {
+                result.push(false);
+            }
+        }
+    });
+    
+
+    return result.filter(el => el).length === result.length;
+}
+
+const checkBeta = (molecule) => {
+    return false
+}
+
+const checkBetaTurn = (molecule) => {
+    return false
 }
 
 const complexDataItemsToString = (complexData) => {
     const impovedComplexData = complexData;
+    const allAtoms = {};
 
     complexData.chainsNames.forEach(chain => {
         impovedComplexData[chain].toWriteInFile = []
 
         impovedComplexData[chain].SSKeys.forEach(ss => {
+            let allAtoms = [];
+
+            impovedComplexData[chain].SSData[ss].forEach(acid => {
+                allAtoms = [...allAtoms, ...acid];
+            });
+
             impovedComplexData[chain].toWriteInFile.push(ss);
-            impovedComplexData[chain].toWriteInFile.push(impovedComplexData[chain].SSData[ss].map(atom => atom.join(' ')).join('\n'));
+            impovedComplexData[chain].toWriteInFile.push(allAtoms.map(atom => normalizeAtom(atom).join(' ')).join('\n'));
         });
 
         impovedComplexData[chain].toWriteInFile = impovedComplexData[chain].toWriteInFile.join('\n');
@@ -258,7 +408,8 @@ const complexDataItemsToString = (complexData) => {
 module.exports = {
     pdbMainSorter,
     getPdbMolecules,
-    atomsFilter,
+    filterAcids,
+    getAminoAcids,
     getChains,
     getVariants,
     filterStaking,

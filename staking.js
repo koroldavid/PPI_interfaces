@@ -64,7 +64,25 @@ const matchin = (aAcid, bAcid) => {
 }
 
 const checkVanDerWaals = (aAcid, bAcid) => {
-    return false;
+    let hasInterface = false;
+    const { VanDerWaalsRadius } = constants;
+
+    aAcid.atoms.keys.forEach(aKey => {
+        bAcid.atoms.keys.forEach(bKey => {
+            const aAtom = aAcid.atoms[aKey];
+            const bAtom = bAcid.atoms[bKey];
+            const aRadius = +VanDerWaalsRadius[aAtom.defaultType];
+            const bRadius = +VanDerWaalsRadius[bAtom.defaultType];
+            const maxRadius = aRadius + bRadius + 0.4;
+
+            const distance = utils.getDistance(aAtom, bAtom);
+            console.log(distance);
+
+            if (distance <= maxRadius) hasInterface = true;
+        });
+    });
+
+    return hasInterface;
 }
 
 const checkPiCation = (aAcid, bAcid) => {
@@ -134,8 +152,6 @@ const checkHyrdogenBonds = (aAcid, bAcid, logs) => {
                     logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} ${distance}`);
                 }
 
-                if (distance <= 3.5) console.log(distance, angleDonor, angleAcceptor);
-
                 if (!isExeption) {
                     if (
                         (distance <= constants.distance.HyrdogenBonds) &&
@@ -165,8 +181,6 @@ const checkHyrdogenBonds = (aAcid, bAcid, logs) => {
                 if (distance <= constants.distance.HyrdogenBonds) {
                     logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} ${distance}`);
                 }
-
-                if (distance <= 3.5) console.log(distance, angleDonor, angleAcceptor);
 
                 if (!isExeption) {
                     if (

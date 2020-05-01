@@ -58,7 +58,7 @@ const getAminoAcids = (atoms, validAcids) => {
     const broken = [];
 
     atoms.forEach(atom => {
-        const [atomNumber, atomType, acidType, chain, acidNumber, x, y, z ] = atom;
+        const [atomNumber, atomType, acidType, chain, acidNumber, x, y, z, factor, charge, defaultType ] = atom;
         const id = `${chain}${acidNumber}`;
 
         const isNotBroken = validAcids.find(type => acidType === type)
@@ -66,13 +66,14 @@ const getAminoAcids = (atoms, validAcids) => {
         if (!isNotBroken) broken.push(id);
 
         if (!aminoAcids[id]) aminoAcids[id] = {
-            atoms: {} ,
+            atoms: { keys: [] } ,
             chain,
             acidType,
-            acidNumber
+            acidNumber,
         };
 
-        aminoAcids[id].atoms[atomType] = { atomNumber, x, y, z };
+        aminoAcids[id].atoms[atomType] = { atomNumber, x, y, z, defaultType, atomType, acidType, chain, acidNumber, factor, charge };
+        aminoAcids[id].atoms.keys.push(atomType);
     });
 
     filtredAcids = Object.keys(aminoAcids).filter(acidId => !broken.find(brokenId => brokenId === acidId));
@@ -322,7 +323,7 @@ const filterStaking = (stakingData) => {
     Object.keys(stakingData).forEach(key => {
         if (stakingData[key].length > 10) {
             stakingResult[key] = stakingData[key];
-            stakingResult.stakingKeys.push(key);
+            stakingResult.keys.push(key);
             stakingResult.length++;
         }
     });
@@ -330,34 +331,23 @@ const filterStaking = (stakingData) => {
     return stakingResult;
 }
 
-const parseStaking = (stakingResult, chains) => {
-    const parsedStaking = {};
+const parseStaking = (stakingResult) => {
+    stakingResult.keys.forEach(key => {
+        const duplicateTracer = {}
+        const chain = stakingResult[key];
 
-    stakingResult.stakingKeys.forEach(key => {
-        const firstChain = key.slice(0, 1);
-        const secondChain = key.slice(1);
+        chain = chain.filter(acid => {
+            const { acidNumber } = acid;
+            const isAcidAdded = duplicateTracer[acidNumber];
 
-        if (!parsedStaking[firstChain]) parsedStaking[firstChain] = [];
-        if (!parsedStaking[secondChain]) parsedStaking[secondChain] = [];
+            duplicateTracer[acidNumber] = true;
 
-        stakingResult[key].forEach(acidsIndexes => {
-            const firstAcidIndex = acidsIndexes[0];
-            const secondAcidIndex = acidsIndexes[1];
-
-            const firstChainAcid = chains[firstChain][firstAcidIndex];
-            const secondChainAcid = chains[secondChain][secondAcidIndex];
-
-            const isFirstAcidIn = parsedStaking[firstChain].find(acid => acid[0][4] === firstChainAcid[0][4]);
-            const isSecondAcidIn = parsedStaking[secondChain].find(acid => acid[0][4] === secondChainAcid[0][4]);
-
-            if (!isFirstAcidIn) parsedStaking[firstChain].push(firstChainAcid);
-            if (!isSecondAcidIn) parsedStaking[secondChain].push(secondChainAcid);
-         });
-
+            return isAcidAdded;
+        });
 
         const compare = (a, b) => {
-            const aPosition = a[0][4];
-            const bPosition = b[0][4];
+            const aPosition = a.acidNumber;
+            const bPosition = b.acidNumber;
           
             let comparison = 0;
             if (aPosition > bPosition) comparison = 1;
@@ -365,8 +355,7 @@ const parseStaking = (stakingResult, chains) => {
             return comparison;
         };
 
-        parsedStaking[firstChain].sort(compare);
-        parsedStaking[secondChain].sort(compare);
+        chain = chain.sort(compare);
     });
 
     return parsedStaking;
@@ -402,74 +391,76 @@ const addSpace = (el, length, befor) => {
 }
 
 const simpleWritePreporation = (parsedStaking) => {
-    let allAcids = [];
-    let allAtoms = [];
+    const allAtoms = [];
 
-    Object.keys(parsedStaking).forEach(key => {
-        allAcids = [...allAcids, ...parsedStaking[key]];
-    });
-
-    allAcids.forEach(acid => {
-        allAtoms = [...allAtoms, ...acid];
+    parsedStaking.keys.forEach(chainKey => {
+        parsedStaking[chainKey].forEach(acid => {
+            acid.atoms.keys.forEach(atomKey => {
+                allAtoms.push(atomToArry(acid.atoms[atomKey]));
+            });
+        });
     });
 
     return allAtoms.map(atom => normalizeAtom(atom).join(' ')).join('\n');
 }
 
+const atomToArry = (atom) => {
+    const { atomNumber,  atomType, acidType, chain, acidNumber, x, y, z, factor, charge, defaultType } = atom;
+
+    return [atomNumber, atomType, acidType, chain, acidNumber, x, y, z, factor, charge, defaultType ];
+}
+
 
 const complexWritePreporation = (parsedStaking, chains) => {
     const complexData = {
-        chainsNames : Object.keys(parsedStaking)
-    }
+        chainsNames: parsedStaking.stakingKeys
+    };
 
-    complexData.chainsNames.forEach(chain => {
+    parsedStaking.stakingKeys.forEach(chainKey => {
         let ssIndexator = 1;
-        complexData[chain] = {};
-        complexData[chain].SSKeys = [];
-        complexData[chain].SSData = {};
 
+        complexData[chainKey] = {};
+        complexData[chainKey].SSKeys = [];
+        complexData[chainKey].SSData = {};
 
-        parsedStaking[chain].forEach(atom => {
+        parsedStaking[chainKey].forEach(acid => {
             const { SSKeys, SSData } = complexData[chain];
-            const atomsChainIndex = chains[chain].findIndex(chainAtom => chainAtom[0] === atom[0]);
-
-            const isAtomUsed = SSKeys.find(ssKey => {
-                return SSData[ssKey].find(ssAtom => ssAtom === atom);
-            });
+            const acidChainIndex     = chains[chainKey].findIndex(chainAcid => chainAcid.acidNumber === acid.acidNumber);
+            const isAtomUsed         = SSKeys.find(ssKey =>  SSData[ssKey].find(ssAcid => ssAcid.acidNumber === acid.acidNumber));
 
             if (isAtomUsed) {
-                const atomsSSkey = isAtomUsed;
-                const atomsSSIndex = SSData[atomsSSkey].findIndex(ssAtom => ssAtom[0] === atom[0]);
+                const acidSSkey = isAtomUsed;
+                const acidSSIndex = SSData[acidSSkey].findIndex(ssAcid => ssAcid.acidNumber === acid.acidNumber);
 
-                const ssAtomsAbove = SSData[atomsSSkey].slice(0, atomsSSIndex).length;
-                const ssAtomsUnder = SSData[atomsSSkey].slice(atomsSSIndex + 1).length;
+                const ssAcidsAbove = SSData[acidSSkey].slice(0, acidSSIndex).length;
+                const ssAcidsUnder = SSData[acidSSkey].slice(acidSSIndex + 1).length;
 
-                if (ssAtomsAbove < 7) {
-                    const amountNeed = 7 - ssAtomsAbove;
+                if (ssAcidsAbove < 7) {
+                    const amountNeed = 7 - ssAcidsAbove;
 
-                    const startPosition = atomsChainIndex - amountNeed > -1 ? atomsChainIndex - amountNeed : 0;
+                    const startPosition = acidChainIndex - amountNeed > -1 ? acidChainIndex - amountNeed : 0;
 
-                    complexData[chain].SSData[atomsSSkey] = [
-                        ...[...chains[chain]].slice(startPosition ,atomsChainIndex),
-                        ...[...SSData[atomsSSkey]].slice(atomsSSIndex)
-                    ]
+                    complexData[chainKey].SSData[acidSSkey] = [
+                        ...[...chains[chainKey]].slice(startPosition ,acidChainIndex),
+                        ...[...SSData[acidSSkey]].slice(acidSSIndex)
+                    ];
                 }
 
-                if (ssAtomsUnder < 7) {
-                    const endPosition = atomsChainIndex + 8;
+                if (ssAcidsUnder < 7) {
+                    const endPosition = acidChainIndex + 8;
 
-                    complexData[chain].SSData[atomsSSkey] = [
-                        ...[...SSData[atomsSSkey]].slice(0, atomsSSIndex),
-                        ...[...chains[chain]].slice(atomsChainIndex, endPosition)
-                    ]
+                    complexData[chainKey].SSData[acidSSkey] = [
+                        ...[...SSData[acidSSkey]].slice(0, acidSSIndex),
+                        ...[...chains[chainKey]].slice(acidChainIndex, endPosition)
+                    ];
                 }
             } else {
                 const ssNumberKey = `ss${ssIndexator}`;
-                const startPoint = atomsChainIndex - 7 > -1 ? atomsChainIndex - 7 : 0;
-                const endPoint = atomsChainIndex + 8;
+                const startPoint = acidChainIndex - 7 > -1 ? acidChainIndex - 7 : 0;
+                const endPoint = acidChainIndex + 8;
 
-                complexData[chain].SSKeys.push(ssNumberKey);
-                complexData[chain].SSData[ssNumberKey] = [...chains[chain]].slice(startPoint, endPoint);
+                complexData[chainKey].SSKeys.push(ssNumberKey);
+                complexData[chainKey].SSData[ssNumberKey] = [...chains[chainKey]].slice(startPoint, endPoint);
 
                 ssIndexator++
             }
@@ -509,31 +500,10 @@ const determite = (complexData) => {
 const checkAlfa = (molecule) => {
     let result = [];
 
-    molecule.forEach((atom, index) => {
-        if (index + 1 < molecule.length - 3) {
-            const compareAtom = molecule[index + 4];
-
-            const x1 = atom[6];
-            const y1 = atom[7];
-            const z1 = atom[8];
-
-            const x2 = compareAtom[6];
-            const y2 = compareAtom[7];
-            const z2 = compareAtom[8];
-
-            const distance = Math.sqrt(
-                Math.pow(
-                    (x2 - x1), 2
-                )
-                +
-                Math.pow(
-                    (y2 - y1), 2
-                )
-                +
-                Math.pow(
-                    (z2 - z1), 2
-                )
-            );
+    molecule.forEach((acid, index) => {
+        if (index < molecule.length - 4) {
+            const compareAcid = molecule[index + 4];
+            const distance = getDistance(acid.atoms.C, compareAcid.atoms.N)
 
             if (distance < 3.5) {
                 result.push(true);
@@ -542,7 +512,6 @@ const checkAlfa = (molecule) => {
             }
         }
     });
-    
 
     return result.filter(el => el).length === result.length;
 }
@@ -552,7 +521,38 @@ const checkBeta = (molecule) => {
 }
 
 const checkBetaTurn = (molecule) => {
-    return false
+    const i1Result = [];
+    const i2Result = [];
+    const i3Result = [];
+
+    molecule.forEach((acid, index) => {
+        if (index < molecule.length - 1) {
+            const i1compareAcid = molecule[index + 1];
+            const i1distance = getDistance(acid.atoms.C, i1compareAcid.atoms.N)
+
+            i1distance < 3.5 ? i1Result.push(true) : i1Result.push(false);
+
+            if (index < molecule.length - 2) {
+                const i2compareAcid = molecule[index + 2];
+                const i2distance = getDistance(acid.atoms.C, i2compareAcid.atoms.N)
+
+                i2distance < 3.5 ? i2Result.push(true) : i2Result.push(false);
+
+                if (index < molecule.length - 3) {
+                    const i3compareAcid = molecule[index + 3];
+                    const i3distance = getDistance(acid.atoms.C, i3compareAcid.atoms.N)
+    
+                    i3distance < 3.5 ? i3Result.push(true) : i3Result.push(false);
+                }
+            }
+        }
+    });
+
+    const isI1 = i1Result.filter(el => el).length === result.length;
+    const isI2 = i2Result.filter(el => el).length === result.length;
+    const isI3 = i3Result.filter(el => el).length === result.length;
+
+    return isI1 || isI2 || isI3;
 }
 
 const complexDataItemsToString = (complexData) => {

@@ -51,13 +51,18 @@ const Donors           = ['TYR', 'SER', 'TRH', 'ARG', 'ASN', 'TRP', 'HIS', 'GLN'
 const Aromatic         = ['PHE', 'TYR', 'TRP', 'HIS'];
 const piCationPolar    = ['LYS', 'ARG'];
 const vanDerWaalsGroup = ['LEU', 'ILE', 'PHE'];
+const VanDerWaalsRadius = {
+    C : 1.7,
+    O : 1.4,
+    N : 1.55
+};
 
 const distance = {
     HyrdogenBonds : 3.5,
     PiStaking     : 4.4,
     TStaking      : 5.5, 
     PiCation      : 6.6,
-    VanDerWaals   : 1
+    VanDerWaals   : ''
 }
 
 const connectionTypes = Object.keys(distance);
@@ -111,5 +116,6 @@ module.exports = {
     AcceptorsMap,
     hydrogenicException,
     AromaticsMap,
-    PolarMap
+    PolarMap,
+    VanDerWaalsRadius
 }

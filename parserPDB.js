@@ -1,4 +1,5 @@
 const utils = require('./utils');
+const constants = require('./constants');
 
 module.exports = function parsePdb(pdbLines) {
     const pbdParsedObj = {};
@@ -6,8 +7,11 @@ module.exports = function parsePdb(pdbLines) {
 
     pbdParsedObj.name       = pbdObjData.HEADER.join(' ');
     pbdParsedObj.molecules  = utils.getPdbMolecules(pbdObjData.COMPND);
-    pbdParsedObj.aminoAcids = utils.getAminoAcids(pbdObjData.ATOMS);
-    pbdParsedObj.chains     = utils.filterAcids(utils.getChains(pbdParsedObj.aminoAcids));
+    pbdParsedObj.aminoAcids = utils.getAminoAcids(pbdObjData.ATOMS, constants.validAcids);
+
+    utils.updateAcidPropeties(pbdParsedObj.aminoAcids, constants);
+
+    pbdParsedObj.chains = utils.getChains(pbdParsedObj.aminoAcids);
 
     return pbdParsedObj;
 }

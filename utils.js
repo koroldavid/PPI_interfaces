@@ -53,79 +53,172 @@ const getPdbMolecules = (compndArry) => {
     return modelcules;
 }
 
-const filterAcids = (chains) => {
-    const chainKey = Object.keys(chains);
-
-    chainKey.forEach(key => {
-        const filtredAcids = [];
-
-        chains[key].forEach(acid => {
-            let isNormal = true
-    
-            acid.forEach(atom => {
-                const acidType = atom[2];
-                if (
-                    acidType === 'ALA' ||
-                    acidType === 'ARG' ||
-                    acidType === 'ASN' ||
-                    acidType === 'ASP' ||
-                    acidType === 'CYS' ||
-                    acidType === 'GLN' ||
-                    acidType === 'GLU' ||
-                    acidType === 'HIS' ||
-                    acidType === 'ILE' ||
-                    acidType === 'LEU' ||
-                    acidType === 'LYS' ||
-                    acidType === 'MET' ||
-                    acidType === 'PHE' ||
-                    acidType === 'PRO' ||
-                    acidType === 'SER' ||
-                    acidType === 'THR' ||
-                    acidType === 'TRP' ||
-                    acidType === 'TYR' ||
-                    acidType === 'VAL'
-                ) {
-                    return true;
-                } else {
-                    isNormal = false;
-                }
-            });
-    
-            if (isNormal) filtredAcids.push(acid);
-        });
-
-        chains[key] = filtredAcids;
-    });
-
-    return chains;
-}
-
-const getAminoAcids = (atoms) => {
+const getAminoAcids = (atoms, validAcids) => {
     const aminoAcids = {};
+    const broken = [];
 
     atoms.forEach(atom => {
-        const id = `${atom[3]}${atom[4]}`;
+        const [atomNumber, atomType, acidType, chain, acidNumber, x, y, z ] = atom;
+        const id = `${chain}${acidType}${acidNumber}`;
+        
+        const isBroken = validAcids.find(type => acidType !== type)
 
-        if (!aminoAcids[id]) aminoAcids[id] = [];
+        if (isBroken) broken.push(id);
 
-        aminoAcids[id].push(atom);
+        if (!aminoAcids[id]) aminoAcids[id] = {
+            atoms: {} ,
+            chain,
+            acidType,
+            acidNumber
+        };
+
+        if (atom.length < 11) 
+        aminoAcids[id].atoms[atomType] = { atomNumber, x, y, z };
     });
 
-    return Object.keys(aminoAcids).map(acidNumber => {
-        return aminoAcids[acidNumber];
+    console.log(broken);
+
+    return Object.keys(aminoAcids).map(acidId => aminoAcids[acidId]);;
+}
+
+const updateAcidPropeties = (acids, constants) => {
+    const { Acceptors, Donors, Aromatic, DonorsMap, AcceptorsMap, AromaticsMap, piCationPolar, PolarMap } = constants;
+
+    acids.forEach(acid => {
+        const { acidType } = acid;
+
+        const isDonor    = Donors.find(type => type === acidType);
+        const isAcceptor = Acceptors.find(type => type === acidType);
+        const isAromatic = Aromatic.find(type => type === acidType);
+        const isPolar    = piCationPolar.find(type => type === acidType);
+
+        if (isDonor) {
+            acid.donors = DonorsMap[acidType].map(key => {
+                const atom  = acid.atoms[key[1]];
+                const angle = [acid.atoms[key[0]], atom];
+
+                return { atom, angle };
+            });
+        }
+
+        if (isAcceptor) {
+            acid.acceptors = AcceptorsMap[acidType].map(key => {
+                const atom  = acid.atoms[key[1]];
+                const angle = [acid.atoms[key[0]], atom];
+
+                return { atom, angle };
+            });
+        }
+        
+        if (isAromatic) {
+            acid.centroids = AromaticsMap[acidType].map(keys => {
+                const centroidAtoms  = keys.map(key => acid.atoms[key]);
+                // console.log(acid);
+                // console.log(keys)
+                // console.log(centroidAtoms)
+                const centroid       = getCentroid(centroidAtoms);
+                const squareEquasion = getSequare(centroidAtoms.slice(0, 3));
+
+                return {
+                    centroid,
+                    squareEquasion
+                }
+            });
+        };
+
+        if (isPolar) {
+            const keys  = PolarMap[acidType];
+            const atom  = acid.atoms[keys[1]];
+            const angle = [acid.atoms[keys[0]], atom];
+
+            acid.polar = { atom, angle };
+        };
     });
 }
 
 const getChains = (acids) => {
-    const chains = {}
+    const chains = {};
 
     acids.forEach(acid => {
-        if (!chains[acid[0][3]]) chains[acid[0][3]] = [];
+        if (!chains[acid.chain]) chains[acid.chain] = [];
         
-        chains[acid[0][3]].push(acid);
+        chains[acid.chain].push(acid);
     });
 
+    chains.keys = Object.keys(chains);
+
     return chains;
+}
+
+const getCentroid = (atoms) => {
+    let x = 0;
+    let y = 0;
+    let z = 0;
+
+    atoms.forEach(atom => {
+        x += +atom.x;
+        y += +atom.y;
+        z += +atom.z;
+    });
+
+    const amount = atoms.length;
+
+    x /= amount;
+    y /= amount;
+    z /= amount;
+
+    return { x , y , z };
+}
+
+const getSequare = (atom) => {
+    const x1 = +atom[0].x;
+    const y1 = +atom[0].y;
+    const z1 = +atom[0].z;
+
+    const x2 = +atom[1].x;
+    const y2 = +atom[1].y;
+    const z2 = +atom[1].z;
+
+    const x3 = +atom[2].x;
+    const y3 = +atom[2].y;
+    const z3 = +atom[2].z;
+
+    const xAdditionMinor = (y2 - y1) * (z3 - z1) - (y3 - y1) * (z2 - z1);
+    const yAdditionMinor = (x2 - x1) * (z3 - z1) - (x3 - x1) * (z2 - z1);
+    const zAdditionMinor = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
+
+    const x = xAdditionMinor;
+    const y = -yAdditionMinor;
+    const z = zAdditionMinor;
+    const d = (-x1) * x + (-y1) * y + (-z1) * z;
+    
+    return { x, y, z, d };
+};
+
+const getDistance = (A, B) => {
+    const x1 = +A.x;
+    const y1 = +A.y;
+    const z1 = +A.z;
+
+    const x2 = +B.x;
+    const y2 = +B.y;
+    const z2 = +B.z;
+
+    const distance = Math.sqrt(
+        Math.pow(
+            (x2 - x1), 2
+        )
+        +
+        Math.pow(
+            (y2 - y1), 2
+        )
+        +
+        Math.pow(
+            (z2 - z1), 2
+        )
+    );
+    
+    return distance;
 }
 
 const getVariants = (groupOne, groupTwo) => {
@@ -138,18 +231,103 @@ const getVariants = (groupOne, groupTwo) => {
     return variants;
 };
 
-const filterStaking = (stakingData) => {
-    filtredData = { 
-        length : 0,
-        stakingKeys : []
-    };
-    stakingKeys = Object.keys(stakingData);
+const getSquareAngle = (A, B) => {
+    const x1 = A.x;
+    const y1 = A.y;
+    const z1 = A.z;
 
-    stakingKeys.forEach(key => {
+    const x2 = B.x;
+    const y2 = B.y;
+    const z2 = B.z;
+
+    const cos = (x1 * x2 + y1 * y2 + z1 * z2) / 
+        (
+            Math.sqrt(
+                Math.pow(x1, 2) + 
+                Math.pow(y1, 2) + 
+                Math.pow(z1, 2)
+            ) 
+            *
+            Math.sqrt(
+                Math.pow(x2, 2) + 
+                Math.pow(y2, 2) + 
+                Math.pow(z2, 2)
+            )
+        );
+    
+    const rads = Math.acos(cosAngle);
+    const angel = Math.floor(rads * 180 / Math.PI);
+
+    return angel;
+}
+
+const getAngle = (atoms) => {
+    const Ax = +atoms[0].x;
+    const Ay = +atoms[0].y;
+    const Az = +atoms[0].z;
+
+    const Bx = +atoms[1].x;
+    const By = +atoms[1].y;
+    const Bz = +atoms[1].z;
+
+    const Cx = +atoms[2].x;
+    const Cy = +atoms[2].y;
+    const Cz = +atoms[2].z;
+
+    const BAx = Ax - Bx;
+    const BAy = Ay - By;
+    const BAz = Az - Bz;
+
+    const BCx = Cx - Bx;
+    const BCy = Cy - By;
+    const BCz = Cz - Bz;
+
+    const BA = Math.sqrt(
+        Math.pow(
+            (BAx), 2
+        )
+        +
+        Math.pow(
+            (BAy), 2
+        )
+        +
+        Math.pow(
+            (BAz), 2
+        )
+    );
+
+    const BC = Math.sqrt(
+        Math.pow(
+            (BCx), 2
+        )
+        +
+        Math.pow(
+            (BCy), 2
+        )
+        +
+        Math.pow(
+            (BCz), 2
+        )
+    ); 
+
+    const BA_BC = BAx * BCx + BAy * BCy + BAz * BCz;
+
+    const cosAngle = BA_BC / (BA * BC);
+    const rads = Math.acos(cosAngle);
+   
+    const angel = Math.floor(rads * 180 / Math.PI);
+
+    return angel;
+}
+
+const filterStaking = (stakingData) => {
+    const stakingResult = { stakingKeys: [], length: 0 };
+
+    Object.keys(stakingData).forEach(key => {
         if (stakingData[key].length > 10) {
-            filtredData[key] = stakingData[key]
-            filtredData.stakingKeys.push(key);
-            filtredData.length += 1;
+            stakingResult[key] = stakingData[key];
+            stakingResult.stakingKeys.push(key);
+            stakingResult.length++;
         }
     });
 
@@ -408,12 +586,15 @@ const complexDataItemsToString = (complexData) => {
 module.exports = {
     pdbMainSorter,
     getPdbMolecules,
-    filterAcids,
     getAminoAcids,
     getChains,
     getVariants,
     filterStaking,
     parseStaking,
     simpleWritePreporation,
-    complexWritePreporation
+    complexWritePreporation,
+    updateAcidPropeties,
+    getDistance,
+    getSquareAngle,
+    getAngle
 }

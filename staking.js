@@ -131,7 +131,7 @@ const checkHyrdogenBonds = (aAcid, bAcid, logs) => {
                 const isExeption = constants.hydrogenicException.find(type => type === bAcid.acidType);
 
                 if (distance <= constants.distance.HyrdogenBonds) {
-                    //logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} ${distance}`);
+                    logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} ${distance}`);
                 }
 
                 if (distance <= 3.5) console.log(distance, angleDonor, angleAcceptor);
@@ -163,7 +163,7 @@ const checkHyrdogenBonds = (aAcid, bAcid, logs) => {
                 const isExeption = constants.hydrogenicException.find(type => type === bAcid.acidType);
 
                 if (distance <= constants.distance.HyrdogenBonds) {
-                    //logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} ${distance}`);
+                    logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} ${distance}`);
                 }
 
                 if (distance <= 3.5) console.log(distance, angleDonor, angleAcceptor);

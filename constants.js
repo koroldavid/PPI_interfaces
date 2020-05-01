@@ -30,7 +30,6 @@ const AromaticsMap = {
     ]
 }
 
-
 const PolarMap = {
     LYS : ['CE', 'NZ'],
     ARG : ['CZ', 'NH1']

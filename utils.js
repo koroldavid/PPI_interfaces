@@ -59,11 +59,11 @@ const getAminoAcids = (atoms, validAcids) => {
 
     atoms.forEach(atom => {
         const [atomNumber, atomType, acidType, chain, acidNumber, x, y, z ] = atom;
-        const id = `${chain}${acidType}${acidNumber}`;
-        
-        const isBroken = validAcids.find(type => acidType !== type)
+        const id = `${chain}${acidNumber}`;
 
-        if (isBroken) broken.push(id);
+        const isNotBroken = validAcids.find(type => acidType === type)
+
+        if (!isNotBroken) broken.push(id);
 
         if (!aminoAcids[id]) aminoAcids[id] = {
             atoms: {} ,
@@ -72,13 +72,12 @@ const getAminoAcids = (atoms, validAcids) => {
             acidNumber
         };
 
-        if (atom.length < 11) 
         aminoAcids[id].atoms[atomType] = { atomNumber, x, y, z };
     });
 
-    console.log(broken);
+    filtredAcids = Object.keys(aminoAcids).filter(acidId => !broken.find(brokenId => brokenId === acidId));
 
-    return Object.keys(aminoAcids).map(acidId => aminoAcids[acidId]);;
+    return filtredAcids.map(acidId => aminoAcids[acidId]);;
 }
 
 const updateAcidPropeties = (acids, constants) => {
@@ -113,9 +112,6 @@ const updateAcidPropeties = (acids, constants) => {
         if (isAromatic) {
             acid.centroids = AromaticsMap[acidType].map(keys => {
                 const centroidAtoms  = keys.map(key => acid.atoms[key]);
-                // console.log(acid);
-                // console.log(keys)
-                // console.log(centroidAtoms)
                 const centroid       = getCentroid(centroidAtoms);
                 const squareEquasion = getSequare(centroidAtoms.slice(0, 3));
 
@@ -240,7 +236,7 @@ const getSquareAngle = (A, B) => {
     const y2 = B.y;
     const z2 = B.z;
 
-    const cos = (x1 * x2 + y1 * y2 + z1 * z2) / 
+    const cosAngle = (x1 * x2 + y1 * y2 + z1 * z2) / 
         (
             Math.sqrt(
                 Math.pow(x1, 2) + 
@@ -331,7 +327,7 @@ const filterStaking = (stakingData) => {
         }
     });
 
-    return filtredData;
+    return stakingResult;
 }
 
 const parseStaking = (stakingResult, chains) => {

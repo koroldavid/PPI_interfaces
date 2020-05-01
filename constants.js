@@ -1,11 +1,10 @@
 const utils = require('./utils');
 
-
 const DonorsMap = {
     TYR : [['CZ', 'OH']],
     SER : [['CB', 'OG']],
     THR : [['CB', 'OG1']],
-    ARG : [['CB', 'NH1'], ['CB', 'NH2'], ['CB', 'NHE']],
+    ARG : [['CB', 'NH1'], ['CB', 'NH2'], ['CB', 'NE']],
     ASN : [['CB', 'ND2']],
     TRP : [['CE2', 'NE1']],
     HIS : [['CE1', 'NE2']],
@@ -18,7 +17,7 @@ const AcceptorsMap = {
     HIS : [['CG', 'ND1']],
     GLN : [['CD', 'OE1']],
     GLU : [['CD', 'OE1'], ['CD', 'OE2']],
-    ASP : [['CG', 'OE1'], ['CG', 'OE2']]
+    ASP : [['CG', 'OD1'], ['CG', 'OD2']]
 }
 
 const AromaticsMap = {
@@ -34,7 +33,7 @@ const AromaticsMap = {
 
 const PolarMap = {
     LYS : ['CE', 'NZ'],
-    ARG : ['CE', 'NH1']
+    ARG : ['CZ', 'NH1']
 };
 
 const hydrogenicException = ['TRP', 'HIS'];
@@ -91,11 +90,11 @@ const angles = {
 }
 
 const variants = {
-    HyrdogenBonds   : utils.getVariants(Acceptors, Donors),
-    PiStaking       : utils.getVariants(Aromatic, Aromatic),
-    TStaking        : utils.getVariants(Aromatic, Aromatic),
-    PiCationStaking : utils.getVariants(Aromatic, piCationPolar),
-    VanDerWaals     : utils.getVariants(vanDerWaalsGroup, vanDerWaalsGroup)
+    HyrdogenBonds : utils.getVariants(Acceptors, Donors),
+    PiStaking     : utils.getVariants(Aromatic, Aromatic),
+    TStaking      : utils.getVariants(Aromatic, Aromatic),
+    PiCation      : utils.getVariants(Aromatic, piCationPolar),
+    VanDerWaals   : utils.getVariants(vanDerWaalsGroup, vanDerWaalsGroup)
 }
 
 module.exports = {

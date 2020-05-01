@@ -19,10 +19,11 @@ fs.readdir(directoryFrom, (err, files) => {
         const parsedPDB = parsePdb(pdbLines);
         parsedPDB.fileName = file;
 
-        const stakingResult = staking(parsedPDB.chains);
-        createLogs(file, stakingResult.logs);
+        const { stakingResult, logs} = staking(parsedPDB.chains);
 
-        if (stakingResult.data.length) writeFile(parsedPDB, stakingResult.data);
+        createLogs(file, logs);
+
+        if (stakingResult.length) writeFile(parsedPDB, stakingResult.data);
         // if (!stakingResult.data.length) moveFile(file, directoryToTrash);
 
         // moveFile(file, directoryTo);

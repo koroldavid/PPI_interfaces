@@ -36,15 +36,7 @@ module.exports = function staking(chains) {
 function checkConnecting(aAcid, bAcid, logs) {
     const type = matchin(aAcid, bAcid);
 
-    if (type) {
-        const isConnecting = connectings[`check${type}`](aAcid, bAcid, logs);
-
-        if (isConnecting) {
-            logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain}`);
-
-            return true;
-        }
-    }
+    if (type) return connectings[`check${type}`](aAcid, bAcid, logs);
 
     return false
 }
@@ -63,7 +55,7 @@ const matchin = (aAcid, bAcid) => {
     });
 }
 
-const checkVanDerWaals = (aAcid, bAcid) => {
+const checkVanDerWaals = (aAcid, bAcid, logs) => {
     let hasInterface = false;
     const { VanDerWaalsRadius } = constants;
 
@@ -76,8 +68,8 @@ const checkVanDerWaals = (aAcid, bAcid) => {
             const maxRadius = aRadius + bRadius + 0.4;
 
             const distance = utils.getDistance(aAtom, bAtom);
-            console.log(distance);
 
+            if (distance <= maxRadius) logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} atom ${aKey} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} atom ${aKey} Van der Waals ${distance} `);
             if (distance <= maxRadius) hasInterface = true;
         });
     });
@@ -85,7 +77,7 @@ const checkVanDerWaals = (aAcid, bAcid) => {
     return hasInterface;
 }
 
-const checkPiCation = (aAcid, bAcid) => {
+const checkPiCation = (aAcid, bAcid, logs) => {
     let hasInterface = false;
     let aromatic  = aAcid;
     let polarAcid = bAcid;
@@ -99,6 +91,7 @@ const checkPiCation = (aAcid, bAcid) => {
         const distance = utils.getDistance(aroma.centroid, polarAcid.polar.atom);
         const angle    = utils.getAngle([...polarAcid.polar.angle, aroma.centroid]);
 
+        if (distance <= constants.distance.piCation) logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} piCation ${distance} angle ${angle}`);
         if (distance <= constants.distance.piCation && (angle >= angles.piCation.from && angle <= angles.piCation.to)) hasInterface = true;
     });
 
@@ -113,6 +106,7 @@ const checkTStaking = (aAcid, bAcid) => {
             const distance = utils.getDistance(aCentroid.centroid, bCentroid.centroid);
             const angle    = utils.getSquareAngle(aCentroid.squareEquasion, bCentroid.squareEquasion);
 
+            if (distance <= constants.distance.tStaking) logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} TStaking ${distance} angle ${angle} `);
             if (distance <= constants.distance.tStaking && (angle >= angles.tStaking.from && angle <= angles.tStaking.to)) hasInterface = true;
         });
     });
@@ -120,7 +114,7 @@ const checkTStaking = (aAcid, bAcid) => {
     return hasInterface
 }
 
-const checkPiStaking = (aAcid, bAcid) => {
+const checkPiStaking = (aAcid, bAcid, logs) => {
     let hasInterface = false;
 
     aAcid.centroids.forEach(aCentroid => {
@@ -128,6 +122,7 @@ const checkPiStaking = (aAcid, bAcid) => {
             const distance = utils.getDistance(aCentroid.centroid, bCentroid.centroid);
             const angle    = utils.getSquareAngle(aCentroid.squareEquasion, bCentroid.squareEquasion);
 
+            if (distance <= constants.distance.piStaking) logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} piStaking ${distance} angle ${angle} `);
             if (distance <= constants.distance.piStaking && angle <= angles.piStaking.to) hasInterface = true;
         });
     });
@@ -149,7 +144,7 @@ const checkHyrdogenBonds = (aAcid, bAcid, logs) => {
                 const isExeption = constants.hydrogenicException.find(type => type === bAcid.acidType);
 
                 if (distance <= constants.distance.HyrdogenBonds) {
-                    logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} ${distance}`);
+                    logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} hydrogen bond distance ${distance} d angle ${angleDonor} a angle ${angleAcceptor} `);
                 }
 
                 if (!isExeption) {
@@ -179,7 +174,7 @@ const checkHyrdogenBonds = (aAcid, bAcid, logs) => {
                 const isExeption = constants.hydrogenicException.find(type => type === bAcid.acidType);
 
                 if (distance <= constants.distance.HyrdogenBonds) {
-                    logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} ${distance}`);
+                    logs.push(`${aAcid.acidType} ${aAcid.acidNumber} ${aAcid.chain} and ${bAcid.acidType} ${bAcid.acidNumber} ${bAcid.chain} hydrogen bond distance ${distance} d angle ${angleDonor} a angle ${angleAcceptor} `);
                 }
 
                 if (!isExeption) {

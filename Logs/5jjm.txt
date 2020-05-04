@@ -1,14 +1,35 @@
-ASP 695 A and ASN 727 C 3.2893050937850092
-ASP 695 A and ASN 727 C
-TYR 773 A and GLU 829 C 2.9811001325014246
-TYR 773 A and GLU 829 C
-HIS 776 A and ASN 833 C 2.996542841342334
-HIS 776 A and ASN 833 C
-ASN 756 B and ASN 756 C 3.2904870460161373
-ASN 756 B and ASN 756 C 3.160082593857317
-ASN 756 B and ASN 756 C
-ASN 727 B and ASP 695 D 2.7821680394972517
-ASN 727 B and ASP 695 D
-GLU 829 B and TYR 773 D 2.635561609979929
-GLU 829 B and TYR 773 D
-ASN 833 B and HIS 776 D 2.9708204254044035
+ASP 695 A and ASN 727 C hydrogen bond distance 3.2893050937850092 d angle 117 a angle 134 
+TYR 773 A atom CD1 and PRO 723 C atom CD1 Van der Waals 3.704229744494794 
+TYR 773 A and GLU 829 C hydrogen bond distance 2.9811001325014246 d angle 125 a angle 125 
+TYR 773 A atom CE1 and LEU 830 C atom CE1 Van der Waals 3.5334024678771057 
+HIS 776 A atom CG and ILE 672 C atom CG Van der Waals 3.679301020574425 
+HIS 776 A atom ND1 and ILE 672 C atom ND1 Van der Waals 3.6184898783884973 
+HIS 776 A and ASN 833 C hydrogen bond distance 2.996542841342334 d angle 137 a angle 129 
+TYR 781 A atom CZ and ILE 672 C atom CZ Van der Waals 3.714009962291433 
+TYR 781 A atom OH and ILE 672 C atom OH Van der Waals 2.7394751322105466 
+MET 734 A atom CG and LEU 67 G atom CG Van der Waals 3.5727460027267535 
+VAL 684 B atom CG2 and TYR 763 C atom CG2 Van der Waals 3.719565297181916 
+ASN 756 B and ASN 756 C hydrogen bond distance 3.2904870460161373 d angle 128 a angle 170 
+ASN 756 B and ASN 756 C hydrogen bond distance 3.160082593857317 d angle 129 a angle 174 
+PRO 766 B atom CB and PRO 766 C atom CB Van der Waals 3.6720774773961415 
+ILE 672 B atom CD1 and HIS 776 D atom CD1 Van der Waals 3.6164027707101463 
+ILE 672 B atom CD1 and HIS 776 D atom CD1 Van der Waals 3.3403306722538737 
+ILE 672 B atom O and TYR 781 D atom O Van der Waals 3.497240483581301 
+ILE 672 B atom O and TYR 781 D atom O Van der Waals 2.690348118738537 
+ILE 672 B atom CB and TYR 781 D atom CB Van der Waals 3.6390526239668426 
+PRO 723 B atom C and TYR 773 D atom C Van der Waals 3.7949623186535053 
+ASN 727 B and ASP 695 D hydrogen bond distance 2.7821680394972517 d angle 150 a angle 96 
+GLU 829 B and TYR 773 D hydrogen bond distance 2.635561609979929 d angle 119 a angle 127 
+LEU 830 B atom CD1 and TYR 773 D atom CD1 Van der Waals 3.6835936257953334 
+ASN 833 B and HIS 776 D hydrogen bond distance 2.9708204254044035 d angle 126 a angle 123 
+VAL 713 B atom CG2 and LEU 66 H atom CG2 Van der Waals 3.7561967467106907 
+VAL 716 B atom CG2 and LEU 63 H atom CG2 Van der Waals 3.4634700807138517 
+MET 734 B atom CE and LEU 63 H atom CE Van der Waals 3.731536948765216 
+MET 734 B atom CG and LEU 67 H atom CG Van der Waals 3.795652644803 
+MET 894 B atom CE and LEU 66 H atom CE Van der Waals 3.655396832082665 
+VAL 716 C atom CG2 and LEU 63 I atom CG2 Van der Waals 3.715206319977396 
+MET 734 C atom CE and LEU 63 I atom CE Van der Waals 3.655576835466598 
+MET 734 C atom CG and LEU 67 I atom CG Van der Waals 3.594762996360125 
+VAL 713 D atom CG1 and LEU 66 J atom CG1 Van der Waals 3.7726199119444863 
+VAL 713 D atom CG2 and LEU 66 J atom CG2 Van der Waals 3.4700237751346914 
+VAL 716 D atom CG1 and LEU 67 J atom CG1 Van der Waals 3.686801052403016 

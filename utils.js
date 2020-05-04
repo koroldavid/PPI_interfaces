@@ -58,11 +58,23 @@ const getAminoAcids = (atoms, validAcids) => {
     const broken = [];
 
     atoms.forEach(atom => {
-        const [atomNumber, atomType, acidType, chain, acidNumber, x, y, z, factor, charge, defaultType ] = atom;
+        let [atomNumber, atomType, acidType, chain, acidNumber, x, y, z, factor, charge, defaultType ] = atom;
+
+        if (chain.length > 1) {
+            defaultType = charge;
+            charge = factor;
+            factor = z;
+            z = y;
+            y = x;
+            x = acidNumber
+            acidNumber = chain.slice(1);
+            chain = chain.slice(0, 1);
+        }
+
         const id = `${chain}${acidNumber}`;
 
-        const isNotBroken = validAcids.find(type => acidType === type)
-
+        const isNotBroken = validAcids.find(type => acidType === type || chain.length > 3);
+        
         if (!isNotBroken) broken.push(id);
 
         if (!aminoAcids[id]) aminoAcids[id] = {
@@ -148,6 +160,8 @@ const getChains = (acids) => {
 }
 
 const getCentroid = (atoms) => {
+    if (atoms.findIndex(el => el == undefined) > -1) return { x: 0, y: 0, z: 0 };
+
     let x = 0;
     let y = 0;
     let z = 0;
@@ -167,18 +181,20 @@ const getCentroid = (atoms) => {
     return { x , y , z };
 }
 
-const getSequare = (atom) => {
-    const x1 = +atom[0].x;
-    const y1 = +atom[0].y;
-    const z1 = +atom[0].z;
+const getSequare = (atoms) => {
+    if (atoms.findIndex(el => el == undefined) > -1) return { x: 0, y: 0, z: 0, d: 0 };
 
-    const x2 = +atom[1].x;
-    const y2 = +atom[1].y;
-    const z2 = +atom[1].z;
+    const x1 = +atoms[0].x;
+    const y1 = +atoms[0].y;
+    const z1 = +atoms[0].z;
 
-    const x3 = +atom[2].x;
-    const y3 = +atom[2].y;
-    const z3 = +atom[2].z;
+    const x2 = +atoms[1].x;
+    const y2 = +atoms[1].y;
+    const z2 = +atoms[1].z;
+
+    const x3 = +atoms[2].x;
+    const y3 = +atoms[2].y;
+    const z3 = +atoms[2].z;
 
     const xAdditionMinor = (y2 - y1) * (z3 - z1) - (y3 - y1) * (z2 - z1);
     const yAdditionMinor = (x2 - x1) * (z3 - z1) - (x3 - x1) * (z2 - z1);
@@ -193,6 +209,8 @@ const getSequare = (atom) => {
 };
 
 const getDistance = (A, B) => {
+    if (!A || !B) return 100000; 
+
     const x1 = +A.x;
     const y1 = +A.y;
     const z1 = +A.z;
@@ -259,6 +277,8 @@ const getSquareAngle = (A, B) => {
 }
 
 const getAngle = (atoms) => {
+    if (atoms.findIndex(el => el == undefined) > -1) return 999;
+
     const Ax = +atoms[0].x;
     const Ay = +atoms[0].y;
     const Az = +atoms[0].z;
@@ -318,7 +338,7 @@ const getAngle = (atoms) => {
 }
 
 const filterStaking = (stakingData) => {
-    const stakingResult = { stakingKeys: [], length: 0 };
+    const stakingResult = { keys: [], length: 0 };
 
     Object.keys(stakingData).forEach(key => {
         if (stakingData[key].length > 10) {
@@ -332,17 +352,20 @@ const filterStaking = (stakingData) => {
 }
 
 const parseStaking = (stakingResult) => {
-    stakingResult.keys.forEach(key => {
+    const { keys, length } = stakingResult;
+    const parsedStaking = { keys, length };
+
+    keys.forEach(key => {
         const duplicateTracer = {}
         const chain = stakingResult[key];
 
-        chain = chain.filter(acid => {
+        const filtredChain = chain.filter(acid => {
             const { acidNumber } = acid;
             const isAcidAdded = duplicateTracer[acidNumber];
 
             duplicateTracer[acidNumber] = true;
 
-            return isAcidAdded;
+            return !isAcidAdded;
         });
 
         const compare = (a, b) => {
@@ -354,8 +377,8 @@ const parseStaking = (stakingResult) => {
             if (aPosition < bPosition) comparison = -1;
             return comparison;
         };
-
-        chain = chain.sort(compare);
+        
+        parsedStaking[key] = filtredChain.sort(compare);
     });
 
     return parsedStaking;
@@ -413,10 +436,10 @@ const atomToArry = (atom) => {
 
 const complexWritePreporation = (parsedStaking, chains) => {
     const complexData = {
-        chainsNames: parsedStaking.stakingKeys
+        chainsNames: parsedStaking.keys
     };
 
-    parsedStaking.stakingKeys.forEach(chainKey => {
+    parsedStaking.keys.forEach(chainKey => {
         let ssIndexator = 1;
 
         complexData[chainKey] = {};
@@ -424,7 +447,7 @@ const complexWritePreporation = (parsedStaking, chains) => {
         complexData[chainKey].SSData = {};
 
         parsedStaking[chainKey].forEach(acid => {
-            const { SSKeys, SSData } = complexData[chain];
+            const { SSKeys, SSData } = complexData[chainKey];
             const acidChainIndex     = chains[chainKey].findIndex(chainAcid => chainAcid.acidNumber === acid.acidNumber);
             const isAtomUsed         = SSKeys.find(ssKey =>  SSData[ssKey].find(ssAcid => ssAcid.acidNumber === acid.acidNumber));
 
@@ -467,7 +490,7 @@ const complexWritePreporation = (parsedStaking, chains) => {
         });
     });
 
-    // const determitedData = determite(complexData);
+    const determitedData = determite(complexData);
 
     return complexDataItemsToString(determitedData)
 }
@@ -548,16 +571,16 @@ const checkBetaTurn = (molecule) => {
         }
     });
 
-    const isI1 = i1Result.filter(el => el).length === result.length;
-    const isI2 = i2Result.filter(el => el).length === result.length;
-    const isI3 = i3Result.filter(el => el).length === result.length;
+    const isI1 = i1Result.filter(el => el).length === i1Result.length;
+    const isI2 = i2Result.filter(el => el).length === i2Result.length;
+    const isI3 = i3Result.filter(el => el).length === i3Result.length;
 
     return isI1 || isI2 || isI3;
 }
 
 const complexDataItemsToString = (complexData) => {
     const impovedComplexData = complexData;
-    const allAtoms = {};
+    
 
     complexData.chainsNames.forEach(chain => {
         impovedComplexData[chain].toWriteInFile = []
@@ -566,7 +589,9 @@ const complexDataItemsToString = (complexData) => {
             let allAtoms = [];
 
             impovedComplexData[chain].SSData[ss].forEach(acid => {
-                allAtoms = [...allAtoms, ...acid];
+                acid.atoms.keys.forEach(atomKey => {
+                    allAtoms.push(atomToArry(acid.atoms[atomKey]));
+                });
             });
 
             impovedComplexData[chain].toWriteInFile.push(ss);

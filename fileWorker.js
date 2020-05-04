@@ -1,7 +1,7 @@
 const fs    = require('fs');
 const utils = require('./utils');
 
-module.exports = function writeFile(pdbStructure, stakingResult) {
+module.exports = function writeFile(pdbStructure, stakingResult, endFunction) {
     const parsedStaking   = utils.parseStaking(stakingResult); //remove duplicate and sort data in chains
     const simpleFileText  = utils.simpleWritePreporation(parsedStaking);
     const complexFileText = utils.complexWritePreporation(parsedStaking, pdbStructure.chains);
@@ -17,4 +17,6 @@ module.exports = function writeFile(pdbStructure, stakingResult) {
             if (err) throw err;
         });
     });
+
+    endFunction();
 };

@@ -23,10 +23,8 @@ fs.readdir(directoryFrom, (err, files) => {
 
         createLogs(file, logs);
 
-        if (stakingResult.length) writeFile(parsedPDB, stakingResult.data);
-        // if (!stakingResult.data.length) moveFile(file, directoryToTrash);
-
-        // moveFile(file, directoryTo);
+        if (stakingResult.length) writeFile(parsedPDB, stakingResult, () => moveFile(file, directoryTo));
+        if (!stakingResult.length) moveFile(file, directoryToTrash);
     });
 });
 

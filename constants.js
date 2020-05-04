@@ -50,7 +50,7 @@ const Acceptors        = ['ASN', 'GLN', 'GLU', 'ASP', 'HIS'];
 const Donors           = ['TYR', 'SER', 'TRH', 'ARG', 'ASN', 'TRP', 'HIS', 'GLN'];
 const Aromatic         = ['PHE', 'TYR', 'TRP', 'HIS'];
 const piCationPolar    = ['LYS', 'ARG'];
-const vanDerWaalsGroup = ['LEU', 'ILE', 'PHE'];
+const vanDerWaalsGroup = ['PHE', 'TYR', 'TRP', 'HIS', 'VAL', 'ILE', 'PRO', 'ALA', 'MET', 'LEU'];
 const VanDerWaalsRadius = {
     C : 1.7,
     O : 1.4,

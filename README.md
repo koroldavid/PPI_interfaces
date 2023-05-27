@@ -4,5 +4,5 @@
 ```javascript
 1. npm install
 2. Put into directory pdbFilesIn all pdb structures
-2. npm run dev
+3. npm run dev
 ```
